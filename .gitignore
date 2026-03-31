@@ -1,0 +1,7 @@
+# SFX trimmer output
+sfx/
+waveforms/
+raw/
+
+# OS
+.DS_Store
