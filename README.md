@@ -2,7 +2,7 @@
 
 # web-av-skills
 
-*Claude Code skills for game animations, sound effects, and interactive web audio-visual experiences.*
+*Claude Code skills for game animations, sound effects, music generation, and audio-reactive visuals.*
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
 
@@ -10,9 +10,9 @@
 
 ## What This Is
 
-A collection of [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code/skills) for building rich audio-visual experiences -- game-feel animations with GSAP, sound effect generation with Suno, and precise audio trimming with ffmpeg.
+A collection of [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code/skills) for building rich audio-visual experiences -- game-feel animations with GSAP, AI music and SFX with Suno, audio trimming with ffmpeg, and audio-synced WebGL demos.
 
-Drop these into your Claude Code setup and get expert-level guidance on animation choreography, SFX prompt engineering, and audio post-processing without repeating yourself across projects.
+Drop these into your Claude Code setup and get expert-level guidance on animation choreography, music/SFX prompt engineering, audio post-processing, and demoscene visuals without repeating yourself across projects.
 
 ## Skills
 
@@ -39,6 +39,28 @@ End-to-end workflow for generating short sound effects with Suno Sounds and auto
 
 Includes the `trim-sfx.sh` script and an ffmpeg pitfalls reference (`references/ffmpeg-pitfalls.md`).
 
+### suno-v5-prompts
+
+Write effective Suno v5 style prompts and structure fields for full music tracks in any genre.
+
+- **Style prompt anatomy** -- Genre, BPM, key, instruments, mood, production cues, and exclusions
+- **Structure field mastery** -- Section tags, instrumental arrangements with parenthetical descriptions and punctuation patterns
+- **Dynamic arcs** -- Energy mapping across sections so tracks go somewhere
+- **Vocal prompting** -- Register, delivery tags, intensity via caps and line length
+- **Iteration strategy** -- Refine one variable at a time, curate from multiple takes
+
+Includes genre example prompts (`references/genre-examples.md`).
+
+### demoscene-webgl
+
+Build audio-synchronized visual demos in a single HTML file using WebGL2/GLSL raymarching and Web Audio API.
+
+- **Choreography-first workflow** -- Analyze audio with ffmpeg/Web Audio/librosa, build a timing map before writing any shader code
+- **Phase-based timeline** -- GLSL `smoothstep` phases that map 1:1 to musical sections
+- **Audio-reactive sync** -- Hybrid system: hardcoded timestamps for structure, real-time FFT for organic responsiveness
+- **Multi-pass rendering** -- Scene, bloom extract, Gaussian blur, composite with post-effects
+- **Critical rule: audio never drives SDF geometry** -- Only materials, brightness, glow, and post-processing react to audio
+
 ## Quick Start
 
 ### Install as Claude Code skills
@@ -48,9 +70,11 @@ Copy the skill directories into your Claude Code skills folder:
 ```bash
 cp -r gsap-game-animations ~/.claude/skills/
 cp -r suno-sfx-trimmer ~/.claude/skills/
+cp -r suno-v5-prompts ~/.claude/skills/
+cp -r demoscene-webgl ~/.claude/skills/
 ```
 
-The skills activate automatically when you ask Claude Code about GSAP animations, particle effects, Suno sound effects, or audio trimming.
+The skills activate automatically based on your queries -- GSAP animations, Suno music/SFX, audio trimming, WebGL demos, etc.
 
 ### Use the SFX trimmer standalone
 
@@ -68,13 +92,22 @@ Trimmed MP3s land in `./sfx/`, waveform PNGs in `./waveforms/`.
 
 ```
 gsap-game-animations/
-  SKILL.md                    # Animation skill definition
-  references/gsap-api.md      # GSAP 3.x API quick reference
+  SKILL.md                       # Animation skill definition
+  references/gsap-api.md         # GSAP 3.x API quick reference
 
 suno-sfx-trimmer/
-  SKILL.md                    # SFX skill definition
+  SKILL.md                       # SFX generation + trimming skill
   references/ffmpeg-pitfalls.md  # Hard-won ffmpeg lessons
-  scripts/trim-sfx.sh         # Batch trim + normalize script
+  scripts/trim-sfx.sh           # Batch trim + normalize script
+
+suno-v5-prompts/
+  SKILL.md                       # Music prompt writing skill
+  references/genre-examples.md   # Style prompt examples by genre
+
+demoscene-webgl/
+  SKILL.md                       # Audio-synced WebGL demo skill
+  references/audio-analysis.md   # ffmpeg, Web Audio, librosa methods
+  references/visual-patterns.md  # Section-to-visual strategies, SDF, post-fx
 ```
 
 ## License
