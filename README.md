@@ -2,7 +2,7 @@
 
 # web-av-skills
 
-*Claude Code skills for game animations, sound effects, music generation, and audio-reactive visuals.*
+*Claude Code skills for game animations, sound effects, music generation, audio-reactive visuals, and image-to-SVG conversion.*
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
 
@@ -10,9 +10,9 @@
 
 ## What This Is
 
-A collection of [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code/skills) for building rich audio-visual experiences -- game-feel animations with GSAP, AI music and SFX with Suno, audio trimming with ffmpeg, and audio-synced WebGL demos.
+A collection of [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code/skills) for building rich audio-visual experiences -- game-feel animations with GSAP, AI music and SFX with Suno, audio trimming with ffmpeg, audio-synced WebGL demos, and AI-generated image to SVG conversion.
 
-Drop these into your Claude Code setup and get expert-level guidance on animation choreography, music/SFX prompt engineering, audio post-processing, and demoscene visuals without repeating yourself across projects.
+Drop these into your Claude Code setup and get expert-level guidance on animation choreography, music/SFX prompt engineering, audio post-processing, demoscene visuals, and raster-to-vector conversion without repeating yourself across projects.
 
 ## Skills
 
@@ -61,6 +61,18 @@ Build audio-synchronized visual demos in a single HTML file using WebGL2/GLSL ra
 - **Multi-pass rendering** -- Scene, bloom extract, Gaussian blur, composite with post-effects
 - **Critical rule: audio never drives SDF geometry** -- Only materials, brightness, glow, and post-processing react to audio
 
+### nano-to-svg
+
+Convert AI-generated raster images (from Nano Banana 2 or similar) to clean, scalable SVG vectors with auto-detected optimal settings.
+
+- **Auto-detection** -- Analyzes contrast, edge density, color count, and saturation to classify images and pick the best conversion strategy
+- **Potrace pipeline** -- ImageMagick preprocessing (blur, threshold, morphology dilate) piped to potrace for smooth Bezier curves with minimal nodes
+- **Quality presets** -- Generates both "detailed" and "minimal" variants so you pick the right fidelity/simplicity balance
+- **Multi-strategy** -- Potrace for line art, vtracer for color images, layer separation for mixed content
+- **Prompt guide** -- Best practices for writing Nano Banana 2 prompts that produce SVG-friendly output (flat colors, high contrast, clean edges)
+
+Includes an image analysis script (`scripts/analyze-image.py`) and a prompt engineering guide (`references/prompt-guide.md`).
+
 ## Quick Start
 
 ### Install as Claude Code skills
@@ -72,9 +84,10 @@ cp -r gsap-game-animations ~/.claude/skills/
 cp -r suno-sfx-trimmer ~/.claude/skills/
 cp -r suno-v5-prompts ~/.claude/skills/
 cp -r demoscene-webgl ~/.claude/skills/
+cp -r nano-to-svg ~/.claude/skills/
 ```
 
-The skills activate automatically based on your queries -- GSAP animations, Suno music/SFX, audio trimming, WebGL demos, etc.
+The skills activate automatically based on your queries -- GSAP animations, Suno music/SFX, audio trimming, WebGL demos, image-to-SVG conversion, etc.
 
 ### Use the SFX trimmer standalone
 
@@ -108,6 +121,11 @@ demoscene-webgl/
   SKILL.md                       # Audio-synced WebGL demo skill
   references/audio-analysis.md   # ffmpeg, Web Audio, librosa methods
   references/visual-patterns.md  # Section-to-visual strategies, SDF, post-fx
+
+nano-to-svg/
+  SKILL.md                       # Image-to-SVG conversion skill
+  scripts/analyze-image.py       # Auto-detect image type and optimal params
+  references/prompt-guide.md     # Nano Banana 2 prompt tips for SVG-friendly output
 ```
 
 ## License
