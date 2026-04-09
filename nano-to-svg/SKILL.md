@@ -1,6 +1,6 @@
 ---
 name: nano-to-svg
-description: Convert AI-generated images (from Nano Banana 2 or similar generators) to clean SVG vectors, and provide prompt-writing guidance for vector-friendly image generation. Use when user says "convert to svg", "vectorize", "trace image", "make svg", "svg convert", "nano to svg", or asks for tips on generating images that convert well to SVG. Invoke with "convert" to process an image, or "tips" for prompt-writing best practices.
+description: Convert AI-generated images (from Nano Banana 2 or similar generators) to clean SVG vectors, and provide prompt-writing guidance for vector-friendly image generation. Use when user says "convert to svg", "vectorize", "trace image", "make svg", "svg convert", "nano to svg", "animate sprite sheet", or asks for tips on generating images that convert well to SVG. Invoke with "convert" to process an image, "tips" for prompt-writing best practices, or "convert" + sprite sheet for animated SVG output.
 compatibility: Requires Homebrew (macOS). Installs potrace, imagemagick, autotrace, and Python vtracer if not present.
 ---
 
@@ -219,3 +219,205 @@ Always trim first:
 ```bash
 magick <input> -fuzz 10% -trim +repage <trimmed>
 ```
+
+---
+
+## Watermark Removal
+
+AI image generators often add small watermarks (sparkles, logos, text) in corners. Remove these before conversion — they trace into unwanted SVG paths.
+
+### Detecting Watermarks
+
+Scan corner regions of the image for bright pixels against the background:
+
+```python
+from PIL import Image
+import numpy as np
+
+img = Image.open(image_path)
+arr = np.array(img.convert("RGB"))
+h, w, _ = arr.shape
+
+# Check each corner region (200x400px)
+corners = {
+    "top-left": arr[:200, :400],
+    "top-right": arr[:200, w-400:],
+    "bottom-left": arr[h-200:, :400],
+    "bottom-right": arr[h-200:, w-400:],
+}
+
+# Sample the background color from nearby interior points
+bg_brightness = np.max(arr[10:20, 10:20], axis=2).mean()
+
+for name, region in corners.items():
+    brightness = np.max(region, axis=2)
+    # Pixels that differ significantly from background
+    anomalous = np.sum(np.abs(brightness - bg_brightness) > 50)
+    if anomalous > 100:  # more than 100 bright outlier pixels
+        ys, xs = np.where(np.abs(brightness - bg_brightness) > 50)
+        print(f"Watermark detected in {name}: {xs.min()}-{xs.max()}, {ys.min()}-{ys.max()}")
+```
+
+### Removing Watermarks
+
+Paint over the detected region with the background color, adding a small margin:
+
+```bash
+# For a dark/black background
+magick <input> -fill black -draw "rectangle <x1>,<y1> <x2>,<y2>" <output>
+
+# For a white background
+magick <input> -fill white -draw "rectangle <x1>,<y1> <x2>,<y2>" <output>
+
+# For any detected background color
+magick <input> -fill '<bg_hex>' -draw "rectangle <x1>,<y1> <x2>,<y2>" <output>
+```
+
+Always add ~10px margin around the detected watermark bounds to catch anti-aliased edges.
+
+---
+
+## Sprite Sheet Animation
+
+Convert a sprite sheet (multiple frames in a single image) into an animated SVG with CSS keyframe animation.
+
+### Step 1: Trace the Full Sheet
+
+Trace the entire sprite sheet as one image using the appropriate strategy (usually Strategy B for color sprites):
+
+```python
+import vtracer
+vtracer.convert_image_to_svg_py(
+    image_path=input_path,
+    out_path=output_path,
+    colormode='color',
+    mode='spline',
+    filter_speckle=8,
+    color_precision=5,
+    layer_difference=24,
+    corner_threshold=60,
+    length_threshold=4.0,
+    splice_threshold=45,
+    path_precision=2,
+    hierarchical='stacked',
+)
+```
+
+### Step 2: Assign Paths to Frames
+
+Split the traced SVG paths into frame groups based on their horizontal position. For a sheet with N evenly-spaced frames:
+
+```python
+frame_w = total_w / num_frames
+
+def get_frame_for_path(path_str):
+    """Determine frame from translate() offset + first M command."""
+    tx = 0
+    t_match = re.search(r'translate\(([^,]+),([^)]+)\)', path_str)
+    if t_match:
+        tx = float(t_match.group(1))
+    d_match = re.search(r'd="M([-\d.]+)\s+([-\d.]+)', path_str)
+    mx = float(d_match.group(1)) if d_match else 0
+    abs_x = tx + mx
+    return max(0, min(num_frames - 1, int(abs_x / frame_w)))
+```
+
+Skip background paths (large rectangles spanning the full width).
+
+### Step 3: Center-Align All Frames
+
+**Critical step.** Sprite sheet frames often have subjects at different horizontal positions. Without alignment, the animation will appear to drift left/right.
+
+Do NOT rely on pixel analysis of the source raster — it's imprecise due to anti-aliasing and color blending. Instead, render each frame's SVG paths to a temporary PNG and measure the bounding box from the rendered output:
+
+```python
+import subprocess
+from PIL import Image
+import numpy as np
+
+# For each frame: write a standalone SVG, render to PNG, measure bounds
+for i in range(num_frames):
+    # Write frame SVG with paths shifted to local coords
+    # ...
+    
+    # Render and measure
+    subprocess.run(["magick", frame_svg_path, "-background", "black", 
+                    "-flatten", frame_png_path])
+    
+    img = Image.open(frame_png_path)
+    arr = np.array(img.convert("RGB"))
+    brightness = np.max(arr, axis=2)
+    mask = brightness > 15
+    ys, xs = np.where(mask)
+    center_x = (xs.min() + xs.max()) / 2
+    # Store center_x for alignment
+```
+
+Compute the shift needed to align each frame's center to the output midpoint:
+
+```python
+target_x = frame_w // 2
+shifts = [target_x - center for center in frame_centers]
+```
+
+Apply these shifts when adjusting each path's `translate()` transform.
+
+### Step 4: Build Animated SVG
+
+Use CSS `@keyframes` with `steps(1)` for crisp frame-by-frame switching:
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {frame_w} {frame_h}">
+<style>
+  @keyframes frame0 {
+    0%     { opacity: 1; }
+    16.66% { opacity: 1; }
+    16.67% { opacity: 0; }
+    100%   { opacity: 0; }
+  }
+  @keyframes frame1 {
+    0%     { opacity: 0; }
+    16.66% { opacity: 0; }
+    16.67% { opacity: 1; }
+    33.32% { opacity: 1; }
+    33.33% { opacity: 0; }
+    100%   { opacity: 0; }
+  }
+  /* ... one @keyframes per frame ... */
+  
+  .frame0 { animation: frame0 0.6s steps(1) infinite; opacity: 1; }
+  .frame1 { animation: frame1 0.6s steps(1) infinite; opacity: 0; }
+  /* ... */
+</style>
+
+<rect width="{frame_w}" height="{frame_h}" fill="#000000"/>
+
+<g class="frame0">
+  <!-- paths for frame 0, translated to local coords + alignment shift -->
+</g>
+<g class="frame1">
+  <!-- paths for frame 1 -->
+</g>
+<!-- ... -->
+</svg>
+```
+
+**Animation timing guidelines:**
+- Fire, water, sparkle effects: **0.6-0.8s** loop (100-133ms per frame for 6 frames)
+- Character idle animations: **1.0-1.5s** loop
+- UI loading spinners: **0.8-1.2s** loop
+- Explosions / one-shots: use `animation-iteration-count: 1` instead of `infinite`
+
+### Step 5: Trim Dead Space
+
+Sprite sheet SVGs often have excess vertical/horizontal space. After building the animation, measure the maximum bounds across all rendered frames and crop the viewBox:
+
+```python
+# Find max vertical extent across all frames
+y_max_overall = max(y_maxes_per_frame) + 20  # 20px padding
+
+# Update the SVG viewBox and background rect
+# viewBox="0 0 {frame_w} {y_max_overall}"
+```
+
+This can cut file height by 50%+ for sprites that don't fill their frames vertically.

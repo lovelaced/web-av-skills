@@ -113,6 +113,36 @@ Before converting, evaluate the generated image:
 
 If the image fails any of these checks, consider regenerating with adjusted prompts before converting. A clean source image always produces a better SVG than aggressive post-processing of a noisy one.
 
+## Sprite Sheet Prompts
+
+When generating sprite sheets for animation, additional guidance applies:
+
+**Layout:**
+- Request "horizontal strip" or "in a row" — vertical stacking is harder to slice
+- Specify exact frame count: "6 frames", "8 frames"
+- Ask for "evenly spaced" frames with "clear separation between each"
+
+**Animation-specific:**
+- Avoid "realistic", "embers", "sparks", "particles" — these create noise between frames that breaks clean separation
+- Use "stylized" or "graphic" instead
+- Request "each frame showing a different phase of the animation cycle"
+- For looping animations, the first and last frames should be similar — mention "seamless loop" or "cycling animation"
+
+**What to avoid for sprite sheets:**
+- Overlapping frames — frames must not bleed into each other
+- Varying sizes — ask for "consistent size across all frames"
+- Complex backgrounds — solid color backgrounds make frame extraction trivial
+
+### Sprite sheet template
+```
+A sprite sheet of [subject] with [N] frames arranged in a horizontal row,
+flat vector art style, [color description], each frame showing a different
+phase of the [animation type] cycle, clean edges, no gradients,
+limited palette of [N] colors, high contrast, solid color fills,
+graphic design aesthetic, [solid color] background, strong outlines,
+no textures, no glow, no [subject-specific things to avoid]
+```
+
 ## Resolution
 
 - Generate at the highest resolution available. Higher resolution = more pixel data for the tracer to work with = smoother curves.

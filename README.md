@@ -63,13 +63,15 @@ Build audio-synchronized visual demos in a single HTML file using WebGL2/GLSL ra
 
 ### nano-to-svg
 
-Convert AI-generated raster images (from Nano Banana 2 or similar) to clean, scalable SVG vectors with auto-detected optimal settings.
+Convert AI-generated raster images (from Nano Banana 2 or similar) to clean, scalable SVG vectors with auto-detected optimal settings. Supports sprite sheet to animated SVG conversion.
 
 - **Auto-detection** -- Analyzes contrast, edge density, color count, and saturation to classify images and pick the best conversion strategy
 - **Potrace pipeline** -- ImageMagick preprocessing (blur, threshold, morphology dilate) piped to potrace for smooth Bezier curves with minimal nodes
 - **Quality presets** -- Generates both "detailed" and "minimal" variants so you pick the right fidelity/simplicity balance
 - **Multi-strategy** -- Potrace for line art, vtracer for color images, layer separation for mixed content
-- **Prompt guide** -- Best practices for writing Nano Banana 2 prompts that produce SVG-friendly output (flat colors, high contrast, clean edges)
+- **Sprite sheet animation** -- Splits sprite sheets into frames, center-aligns them using rendered SVG bounding boxes, and assembles CSS `@keyframes` animated SVGs with `steps(1)` transitions
+- **Watermark removal** -- Auto-detects and removes corner watermarks from AI-generated images before tracing
+- **Prompt guide** -- Best practices for writing Nano Banana 2 prompts that produce SVG-friendly output, including sprite sheet-specific guidance
 
 Includes an image analysis script (`scripts/analyze-image.py`) and a prompt engineering guide (`references/prompt-guide.md`).
 
