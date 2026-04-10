@@ -10,98 +10,202 @@
 
 ## What This Is
 
-A collection of [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code/skills) for building rich audio-visual experiences -- game-feel animations with GSAP, AI music and SFX with Suno, audio trimming with ffmpeg, audio-synced WebGL demos, and AI-generated image to SVG conversion.
+A collection of [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code/skills) for building rich audio-visual experiences. Drop these into your Claude Code setup and describe what you want -- the skills handle the technical details.
 
-Drop these into your Claude Code setup and get expert-level guidance on animation choreography, music/SFX prompt engineering, audio post-processing, demoscene visuals, and raster-to-vector conversion without repeating yourself across projects.
+## Install
+
+```bash
+git clone https://github.com/user/web-av-skills.git
+cd web-av-skills
+
+# Install all
+for skill in gsap-game-animations suno-sfx-trimmer suno-v5-prompts demoscene-webgl nano-to-svg; do
+  cp -r "$skill" ~/.claude/skills/
+done
+```
+
+Skills activate automatically based on what you ask for.
+
+## Putting It All Together
+
+These skills combine naturally. Here's what building a game UI with original art, animation, and sound looks like end to end:
+
+**1. Generate your art**
+
+> *"I need a fire effect sprite sheet for a 2D RPG. Give me a Nano Banana 2 prompt for it."*
+
+Claude writes an optimized prompt. Paste it into Nano Banana 2, download the full-size result.
+
+**2. Convert to SVG**
+
+> *"Convert ~/Downloads/fire-sprite.png to an animated SVG, 0.7 second loop"*
+
+Claude analyzes the image, traces it, splits the frames, center-aligns them, and outputs a looping animated SVG.
+
+**3. Animate it in your game UI**
+
+> *"Build a GSAP animation sequence: when the player takes damage, flash the screen red, shake the viewport, and show this fire SVG on the hit location with a particle burst behind it"*
+
+Claude choreographs a multi-beat GSAP timeline with the right easing and timing for game feel.
+
+**4. Generate SFX from the timeline**
+
+> *"Look at the GSAP timeline you just built. What sound effects do I need, and how long should each one be?"*
+
+Claude reads the animation it created -- the screen flash is 0.15s, the shake is 0.4s, the fire appears over 0.3s, the particle burst is 0.6s -- and produces a list of SFX with exact durations and Suno Sounds prompts for each, all in a consistent key.
+
+**5. Trim the SFX to match**
+
+Generate the sounds in Suno, download the WAVs, then:
+
+> *"Trim these to the durations from the timeline and normalize them"*
+
+Claude runs the ffmpeg pipeline with the exact durations it specified -- peak detection, sample-accurate trim, fade, two-pass normalization, MP3 export. Every sound fits its animation beat precisely.
+
+Now you have vector art, choreographed animation, and precisely trimmed sound that all work together -- and the timing was derived from the animation itself, not guessed.
+
+---
 
 ## Skills
 
+### nano-to-svg
+
+Convert AI-generated images to clean SVG vectors. Auto-detects the best conversion strategy.
+
+**Get a prompt for your image generator:**
+
+> *"I need some SVG sprite sheet assets for a video game -- a fire animation, a water splash, and a healing sparkle effect. Give me Nano Banana 2 prompts for each."*
+
+Claude gives you optimized prompts that produce SVG-friendly output (flat colors, clean edges, high contrast). Paste into Nano Banana 2 and download the full-size results.
+
+**Convert a single image:**
+
+> *"Vectorize ~/Downloads/game-icon.png"*
+
+Claude runs the analysis script, picks the right pipeline, and generates both a detailed and minimal variant. You pick which one works.
+
+**Convert and animate a sprite sheet:**
+
+> *"Convert this sprite sheet to an animated SVG with a 0.8 second loop"* [paste image or point to file]
+
+Claude splits the sheet into frames, traces each one, center-aligns them, and assembles a CSS-animated SVG with crisp frame transitions.
+
+**Fine-tune the output:**
+
+> *"The curves are a bit jagged, can you smooth them out?"*
+
+> *"There are some small artifacts near the edges, clean those up"*
+
+> *"I'm losing some thin lines -- can you capture more detail?"*
+
+Claude adjusts the pipeline parameters and regenerates.
+
+---
+
 ### gsap-game-animations
 
-Build premium, tactile game-feel animations using GSAP 3.x and Canvas 2D. Think Peggle, Balatro, Hearthstone -- animations that make the user smile.
+Build premium, tactile game-feel animations using GSAP and Canvas 2D.
 
-- **Timeline choreography** -- Sequence complex multi-beat animations with labels and position parameters
-- **Particle systems** -- Object-pooled Canvas 2D particles with additive blending for zero-GC glow effects
-- **Physical easing** -- Opinionated easing guide: `back.out` for entrances, `elastic.out` for impacts, two-phase tweens for deceleration
-- **Clever techniques** -- Progressive clip-path tears, canvas light shafts, alpha-aware glow
-- **Mobile performance** -- Only animate `transform`/`opacity`, pool particles, pause on `visibilitychange`
+**Describe the moment, not the math:**
 
-Includes a GSAP 3.x API quick reference (`references/gsap-api.md`).
+> *"Build a card pack opening -- 5 cards fan out from a pack, each flips to reveal its face with a shimmer, then the rarest card scales up with a particle burst and glow behind it"*
+
+Claude builds a complete GSAP timeline with overlapping animations, physical easing (back.out for entrances, elastic.out for impacts), and canvas particle effects.
+
+**Add juice to existing UI:**
+
+> *"I have a score counter component. When the score increments, I want the number to scale up slightly, change color briefly, and have a small burst of particles fly out"*
+
+> *"Make a damage number popup that floats up with a slight random drift, scales from 0 to 1.2 then settles, and fades while rising"*
+
+**Choreograph complex sequences:**
+
+> *"Build a level-complete celebration: stars fly in from the edges, a banner slides down with a bounce, the score counts up with each digit popping, then confetti rains with a slow fade"*
+
+Claude thinks in timelines with labels and position parameters -- overlapping animations that feel like one cohesive moment rather than a sequence of isolated effects.
+
+**Derive your sound design from the animation:**
+
+> *"Based on this timeline, what SFX do I need and what duration should each one be? Write Suno prompts for all of them."*
+
+Claude inspects the timeline it built -- every tween has a start time and duration -- and produces a complete SFX shot list with Suno prompts and exact trim durations that match each animation beat.
+
+---
 
 ### suno-sfx-trimmer
 
-End-to-end workflow for generating short sound effects with Suno Sounds and auto-trimming them to exact durations using ffmpeg.
+Generate short sound effects with Suno Sounds and auto-trim them to exact durations.
 
-- **Suno prompt engineering** -- Prompt structure, key scheme strategy, and best practices for SFX (not music)
-- **Precision trimming** -- Peak detection via `astats`, sample-accurate trim via `atrim` filter, fade in/out, two-pass peak normalization
-- **Visual QA** -- Before/after waveform PNGs for every processed file
-- **Battle-tested pipeline** -- Documents every ffmpeg pitfall for short audio: the `-ss`/`-af` interaction bug, why `ebur128` fails under 2s, why `dynaudnorm` destroys sub-500ms clips
+**Generate a set of SFX:**
 
-Includes the `trim-sfx.sh` script and an ffmpeg pitfalls reference (`references/ffmpeg-pitfalls.md`).
+> *"I need sound effects for a booster pack opening: a pack rip, a card whoosh for each of 5 cards, a shimmer for the rare reveal, and a celebration chime"*
+
+Claude writes Suno Sounds prompts with a consistent musical key so all the sounds layer without clashing. Generate them in Suno and download.
+
+**Trim and normalize:**
+
+> *"Trim all the WAVs in ./raw/ to 0.5 seconds and normalize"*
+
+Claude handles peak detection, sample-accurate trimming, fade in/out, and two-pass normalization. Output lands as MP3s with before/after waveform PNGs for QA.
+
+**Extract a specific hit from a longer clip:**
+
+> *"This 10-second Suno output has a great transient at around 1.2 seconds. Extract just that as a 0.3 second clip."*
+
+**Standalone script:**
+
+```bash
+./suno-sfx-trimmer/scripts/trim-sfx.sh ./raw ./sfx              # default 1.0s
+./suno-sfx-trimmer/scripts/trim-sfx.sh -d 0.5 ./raw ./sfx       # custom duration
+```
+
+---
 
 ### suno-v5-prompts
 
-Write effective Suno v5 style prompts and structure fields for full music tracks in any genre.
+Write Suno v5 prompts for full music tracks in any genre.
 
-- **Style prompt anatomy** -- Genre, BPM, key, instruments, mood, production cues, and exclusions
-- **Structure field mastery** -- Section tags, instrumental arrangements with parenthetical descriptions and punctuation patterns
-- **Dynamic arcs** -- Energy mapping across sections so tracks go somewhere
-- **Vocal prompting** -- Register, delivery tags, intensity via caps and line length
-- **Iteration strategy** -- Refine one variable at a time, curate from multiple takes
+**Describe what you're scoring:**
 
-Includes genre example prompts (`references/genre-examples.md`).
+> *"I need a background track for a chill puzzle game. Something lo-fi and warm, about 2 minutes, no vocals. It should feel relaxing but not sleepy."*
+
+Claude builds a complete Suno v5 prompt with style fields (genre, BPM, key, specific instruments, mood, production cues) and a structure field with section tags and energy arc.
+
+**Score a specific scene:**
+
+> *"Write a Suno prompt for a boss fight theme. Relentless, dark, heavy. Needs to loop cleanly."*
+
+> *"I need a victory fanfare -- short, triumphant, orchestral. Think Final Fantasy but modern."*
+
+**Iterate on a generation you like:**
+
+> *"I generated this track and the verse is great but the chorus falls flat. How do I adjust the prompt to make the chorus hit harder without changing what works?"*
+
+Claude refines one variable at a time -- the skill's iteration strategy ensures you don't lose what's already working.
+
+---
 
 ### demoscene-webgl
 
 Build audio-synchronized visual demos in a single HTML file using WebGL2/GLSL raymarching and Web Audio API.
 
-- **Choreography-first workflow** -- Analyze audio with ffmpeg/Web Audio/librosa, build a timing map before writing any shader code
-- **Phase-based timeline** -- GLSL `smoothstep` phases that map 1:1 to musical sections
-- **Audio-reactive sync** -- Hybrid system: hardcoded timestamps for structure, real-time FFT for organic responsiveness
-- **Multi-pass rendering** -- Scene, bloom extract, Gaussian blur, composite with post-effects
-- **Critical rule: audio never drives SDF geometry** -- Only materials, brightness, glow, and post-processing react to audio
+**Give it a track and a vision:**
 
-### nano-to-svg
+> *"Build a WebGL demo synced to track.mp3. Dark void that fills with geometric shapes during the intro, explodes into color at the drop, dissolves to particles for the outro."*
 
-Convert AI-generated raster images (from Nano Banana 2 or similar) to clean, scalable SVG vectors with auto-detected optimal settings. Supports sprite sheet to animated SVG conversion.
+Claude analyzes the audio structure first (the skill enforces choreography-first workflow), builds a timing map, then writes the shaders and phase system to match.
 
-- **Auto-detection** -- Analyzes contrast, edge density, color count, and saturation to classify images and pick the best conversion strategy
-- **Potrace pipeline** -- ImageMagick preprocessing (blur, threshold, morphology dilate) piped to potrace for smooth Bezier curves with minimal nodes
-- **Quality presets** -- Generates both "detailed" and "minimal" variants so you pick the right fidelity/simplicity balance
-- **Multi-strategy** -- Potrace for line art, vtracer for color images, layer separation for mixed content
-- **Sprite sheet animation** -- Splits sprite sheets into frames, center-aligns them using rendered SVG bounding boxes, and assembles CSS `@keyframes` animated SVGs with `steps(1)` transitions
-- **Watermark removal** -- Auto-detects and removes corner watermarks from AI-generated images before tracing
-- **Prompt guide** -- Best practices for writing Nano Banana 2 prompts that produce SVG-friendly output, including sprite sheet-specific guidance
+**Start from a visual concept:**
 
-Includes an image analysis script (`scripts/analyze-image.py`) and a prompt engineering guide (`references/prompt-guide.md`).
+> *"Raymarched tunnel that morphs with the music -- organic and flowing during quiet parts, angular and fractured during loud parts. Bass drives the bloom intensity."*
 
-## Quick Start
+**Iterate on timing:**
 
-### Install as Claude Code skills
+> *"The visual transition at 0:34 feels early -- the drop actually hits at 0:35.2. Also the breakdown section needs to be more visually quiet, there's too much going on."*
 
-Copy the skill directories into your Claude Code skills folder:
+Claude adjusts timestamps and phase transitions. Quiet sections stay visually quiet -- contrast is what makes loud moments hit.
 
-```bash
-cp -r gsap-game-animations ~/.claude/skills/
-cp -r suno-sfx-trimmer ~/.claude/skills/
-cp -r suno-v5-prompts ~/.claude/skills/
-cp -r demoscene-webgl ~/.claude/skills/
-cp -r nano-to-svg ~/.claude/skills/
-```
-
-The skills activate automatically based on your queries -- GSAP animations, Suno music/SFX, audio trimming, WebGL demos, image-to-SVG conversion, etc.
-
-### Use the SFX trimmer standalone
-
-```bash
-# Prerequisites: ffmpeg with libmp3lame
-brew install ffmpeg
-
-# Place Suno WAV files in ./raw/, then:
-./suno-sfx-trimmer/scripts/trim-sfx.sh ./raw ./sfx
-```
-
-Trimmed MP3s land in `./sfx/`, waveform PNGs in `./waveforms/`.
+---
 
 ## Project Structure
 
